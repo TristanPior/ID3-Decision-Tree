@@ -9,13 +9,14 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <string.h>
+#include <math.h>
 #include "ItemTree.cpp"
 
 //Decision Tree source node
 //static DTreeNode srcNode;
 static vector<string> attributes = {};
 static int mostFrequentClassVal;
+static int secondMostFrequentClassVal;
 static int numTotalItems = 0;
 
 class DecisionTree {
@@ -92,11 +93,36 @@ public: void input(string fileName) {
 		this->n.addItem(it);
 	}
 	//Determine most frequent class value
-	if (c0 >= c1 && c0 >= c2) { mostFrequentClassVal = c0; }
-	else if (c1 > c0 && c1 >= c2) { mostFrequentClassVal = c1; }
-	else/* if (c2 > c0 && c2 > c1)*/ { mostFrequentClassVal = c2; }
+	/* REPLACED BY setMostFrequentClassValue
+	if (c0 >= c1 && c0 >= c2) { mostFrequentClassVal = 0; }
+	else if (c1 > c0 && c1 >= c2) { mostFrequentClassVal = 1; }
+	else/* if (c2 > c0 && c2 > c1)*//* { mostFrequentClassVal = 2; }
+	*/
 }
 
+		//Function to set the most Frequent class value
+public: void setMostFrequentClassValue() {
+	int c0 = 0;
+	int c1 = 0;
+	int c2 = 0;
+	for (Item i : itemList) {
+		int classV = i.getClassVal();
+		switch (classV) {
+			case 0: c0++;
+				break;
+			case 1: c1++;
+				break;
+			case 2: c2++;
+				break;
+		}
+	}
+	if (c0 >= c1 && c0 >= c2) { mostFrequentClassVal = 0; }
+	else if (c1 > c0 && c1 >= c2) { mostFrequentClassVal = 1; }
+	else { mostFrequentClassVal = 2; }
+	if ((c0 >= c1 && c0 <= c2) || (c0 <= c1 && c0 >= c2)) { secondMostFrequentClassVal = 0; }
+	else if ((c1 > c0 && c1 <= c2) || (c1 < c0 && c1 >= c2)) { secondMostFrequentClassVal = 1; }
+	else { secondMostFrequentClassVal = 2; }
+}
 		 //Helper function for getInfoGain to calculate entropy
 private: double getEntropy(vector<Item> iPointers) {
 	//Check for empty vector
@@ -205,8 +231,45 @@ private: void assignClassValue(DTreeNode* node) {
 				break;
 		}
 	}
-	if (c0 >= c1 && c0 >= c2) { node->setExpectedClassValue(0); }
-	else if (c1 > c0 && c1 >= c2) { node->setExpectedClassValue(1); }
+	//If c0, c1, and c2 are all equal then the nodes class value is the most frequent in the entire set
+	if (c0 == c1 && c0 == c2) { node->setExpectedClassValue(mostFrequentClassVal); }
+	//If a pair ties for most frequent, then the nodes class value is the more frequent of the two in the entire set
+	else if (c0 == c1 || c0 == c2 || c1 == c2) {
+		//c0, c1 pair
+		if (c0 == c1) {
+			if (c0 > c2) {
+				if (c0 == mostFrequentClassVal) { node->setExpectedClassValue(0); }
+				else if (c1 == mostFrequentClassVal) { node->setExpectedClassValue(1); }
+				else if (c0 == secondMostFrequentClassVal) { node->setExpectedClassValue(0); }
+				else { node->setExpectedClassValue(1); }
+			}
+			else { node->setExpectedClassValue(2); }
+		}
+		//c0, c2 pair
+		if (c0 == c2) {
+			if (c0 > c1) {
+				if (c0 == mostFrequentClassVal) { node->setExpectedClassValue(0); }
+				else if (c2 == mostFrequentClassVal) { node->setExpectedClassValue(2); }
+				else if (c0 == secondMostFrequentClassVal) { node->setExpectedClassValue(0); }
+				else { node->setExpectedClassValue(2); }
+			}
+			else { node->setExpectedClassValue(1); }
+		}
+		//c1, c2 pair
+		if (c1 == c2) {
+			if (c1 > c0) {
+				if (c1 == mostFrequentClassVal) { node->setExpectedClassValue(1); }
+				else if (c2 == mostFrequentClassVal) { node->setExpectedClassValue(2); }
+				else if (c1 == secondMostFrequentClassVal) { node->setExpectedClassValue(1); }
+				else { node->setExpectedClassValue(2); }
+			}
+			else { node->setExpectedClassValue(0); }
+		}
+
+	}
+	//c0, c1, c2 are all unique
+	else if (c0 > c1 && c0 > c2) { node->setExpectedClassValue(0); }
+	else if (c1 > c0 && c1 > c2) { node->setExpectedClassValue(1); }
 	else { node->setExpectedClassValue(2); }
 }
 
@@ -264,9 +327,9 @@ public: void buildTreeHelper(DTreeNode* node, vector<int> usedAttributes) {
 	usedAttributes.push_back(bestIGainAttribute);
 	//Create new children
 	string attribute = attributes[bestIGainAttribute];
-	node->addChild(attribute, 0);
-	node->addChild(attribute, 1);
-	node->addChild(attribute, 2);
+	node->addChild(attribute, bestIGainAttribute, 0);
+	node->addChild(attribute, bestIGainAttribute, 1);
+	node->addChild(attribute, bestIGainAttribute, 2);
 
 	vector<DTreeNode*> children = node->getChildren();
 
@@ -323,6 +386,41 @@ private: int getAccuracyHelper(DTreeNode* node) {
 		//Function that outputs the accuracy of the classification as a percentage
 public: double getAccuracy() {
 	return ((double) getAccuracyHelper(&n) / numTotalItems) * 100.0;
+}
+
+		//Function to clear the itemList and the items stored in any nodes
+public: void clearTree() {
+	itemList = {};
+	n.clearIList();
+	numTotalItems = 0;
+}
+
+		//Recursive helper function for classifyTestData
+private: void classifyTestDataHelper(DTreeNode* node) {
+	//Get a list of children
+	vector<DTreeNode*> cList = node->getChildren();
+	//If there is no children, then node is a leaf node, thus return
+	if (cList.empty()) { return; }
+
+	//Find the index of the attribute
+	//string att = cList[0]->getAttribute();
+	//int attNum;
+	//for (size_t i = 0; i < attributes.size(); i++) { if (att == attributes[i]) { attNum = i; }}
+	
+	int attNum = cList[0]->getAttributeNumber();
+
+	//Iterate through all items and add them to the appropriate children
+	for (Item i : node->getItems()) {
+		cList[i.getAttVal()[attNum]]->addItem(i);
+	}
+	for (DTreeNode* i : cList) { classifyTestDataHelper(i); }
+}
+
+		//Entry function to begin classifying test data
+public: void classifyTestData() {
+	classifyTestDataHelper(&n);
+	//vector<DTreeNode*> cList = n.getChildren();
+	//for (DTreeNode* i : cList) { classifyTestDataHelper(i); }
 }
 
 };
