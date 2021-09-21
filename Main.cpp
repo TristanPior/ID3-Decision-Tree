@@ -24,12 +24,25 @@ int main(int argc, char** argv) {
 
 	//Create a decision tree
 	DecisionTree dt;
+	//Input the training data
 	dt.input(trainFile);
-	vector<int> temp = {};
+	//Set the most frequent class value
+	dt.setMostFrequentClassValue();
+	//Build the tree with the training data
 	dt.buildTree();
+	//Print the built tree
 	dt.printTree();
-	printf("\nAccuracy on training set (%i instances): %.1f%%\n", numTotalItems, dt.getAccuracy());
-	
+	//Print the accuracy on the training data set
+	printf("\nAccuracy on training set (%i instances): %.2f%%\n", numTotalItems, dt.getAccuracy());
+	//Empty the item lists in all tree nodes
+	dt.clearTree();
+	//Input the test data
+	dt.input(testFile);
+	//Classify the test data
+	dt.classifyTestData();
+	//Print the accuracy on the test data set
+	printf("\nAccuracy on test set (%i instances): %.2f%%\n", numTotalItems, dt.getAccuracy());
+
 	
 	
 	

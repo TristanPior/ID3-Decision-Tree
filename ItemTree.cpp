@@ -8,6 +8,7 @@
 */
 
 #include <vector>
+#include <string>
 
 using namespace std;
 
@@ -43,8 +44,10 @@ public: int getClassVal() { return classVal; }
 
 //DTreeNode
 class DTreeNode {
-		 //Attribute being split
+		 //Attribute name being split
 private: string attribute = "";
+		 //Attribute's number
+private: int attNum = -1;
 		 //Attribute's value
 private: int attVal = -1;
 		 //Vector of Items in this node
@@ -58,13 +61,15 @@ private: int expectedClassValue = -1;
 		//Source Node Constructor
 public: DTreeNode() {
 	attribute = "";
+	attNum = -1;
 	attVal = -1;
 	iList = {};
 	children = {};
 };
 		//Child Constructor
-public: DTreeNode(string att, int aVal) {
+public: DTreeNode(string att,int aNum, int aVal) {
 		attribute = att;
+		attNum = aNum;
 		attVal = aVal;
 		iList = {};
 		children = {};
@@ -74,8 +79,8 @@ public: DTreeNode(string att, int aVal) {
 public: void addItem(Item i) { this->iList.push_back(i); }
 
 		//Function to add a child to this node
-public: void addChild(string attribute, int aVal) {
-		DTreeNode* child = new DTreeNode(attribute, aVal);
+public: void addChild(string attribute, int aNum, int aVal) {
+		DTreeNode* child = new DTreeNode(attribute, aNum, aVal);
 		this->children.push_back(child);
 	}
 
@@ -87,6 +92,9 @@ public: vector<DTreeNode*> getChildren() { return children; }
 
 		//Get function for expected class value
 public: int getExpectedClassValue() { return expectedClassValue; }
+
+		//Get function for attribute number
+public: int getAttributeNumber() { return attNum; }
 
 		//Set function for expected class value
 public: void setExpectedClassValue(int n) { this->expectedClassValue = n; }
