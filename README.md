@@ -1,5 +1,5 @@
 # CS4375-ID3-Assignment-1
-Class: CS4375  
+Class: CS4375 Intro to Machine Learning  
 Assignment: Assignment 1 Part 2  
 Due Date: 9/21/21  
 Goal: Implement the ID3 Decision Tree algorithm to function on ternary data  
