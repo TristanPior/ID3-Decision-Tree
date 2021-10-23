@@ -1,4 +1,4 @@
-# CS4375-ID3-Assignment-1
+# ID3-Decision-Tree
 Class: CS4375 Intro to Machine Learning  
 Assignment: Assignment 1 Part 2  
 Due Date: 9/21/21  
